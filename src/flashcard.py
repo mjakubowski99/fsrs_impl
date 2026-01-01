@@ -1,0 +1,3 @@
+
+class Flashcard:
+    content: str
