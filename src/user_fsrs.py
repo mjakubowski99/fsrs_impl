@@ -1,5 +1,6 @@
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from src.fsrs_queue import FsrsQueue
 from src.queue_type import QueueType
@@ -7,8 +8,10 @@ from src.queue_type import QueueType
 
 @dataclass
 class UserFsrs:
+    id: int|None
     user_id: str
     queues: list[FsrsQueue]
+    updated_at: datetime
 
     @staticmethod 
     def new_fsrs(user_id: str) -> 'UserFsrs':

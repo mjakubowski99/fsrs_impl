@@ -123,6 +123,7 @@ class FsrsParams:
         difficulty: float|None = None,
         due: datetime|None = None,
         last_review: datetime|None = None,
+        reviews_count: int = 0,
         parameters: list[float] = DEFAULT_PARAMETERS,
         learning_steps: tuple[timedelta, ...] | list[timedelta] = (
             timedelta(minutes=1),
@@ -132,6 +133,7 @@ class FsrsParams:
             timedelta(minutes=10),
         ),
         is_pending: bool = False,
+        last_rating: Rating|None = None,
     ):
         self.state = state
 
@@ -152,6 +154,8 @@ class FsrsParams:
         self.relearning_steps = relearning_steps
         self.last_rating = None
         self.is_pending = is_pending
+        self.reviews_count = reviews_count
+        self.last_rating = last_rating
 
     def __repr__(self):
         return f"FsrsParams(stability={self.stability}, difficulty={self.difficulty}, due={self.due}, last_review={self.last_review}, reviews_count={self.reviews_count}, last_rating={self.last_rating}, learning_steps={self.learning_steps}, relearning_steps={self.relearning_steps}, step={self.step}, state={self.state}, is_pending={self.is_pending})"

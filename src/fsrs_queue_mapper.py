@@ -1,22 +1,23 @@
 
-from src.fsrs import FsrsParams
+from datetime import timezone
+from src.fsrs_algorithm import FsrsParams
 from src.fsrs_queue import FsrsQueue
 from src.queue_type import QueueType
 from datetime import datetime
 from src.fsrs_model import FsrsModel
-from datetime import timezone
 from sqlalchemy import BinaryExpression, case
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy import and_, or_
+from src.state import State
 
 
 class FsrsQueueMapper:
 
-    def to_orders(self, queues: list[FsrsQueue]) -> list[ColumnElement]:
+    def to_orders(self, queues: list[FsrsQueue], now: datetime) -> list[ColumnElement]:
         whens = []
 
         for idx, queue in enumerate(queues, start=1):
-            condition = self.queue_condition(queue)
+            condition = self.queue_condition(queue, now)
             whens.append((condition, idx))
 
         order_case = case(
@@ -26,43 +27,51 @@ class FsrsQueueMapper:
 
         return [order_case.asc()]
 
-    def to_filters(self, queues: list[FsrsQueue]) -> list[BinaryExpression]:
-        conditions = [self.queue_condition(queue) for queue in queues]
-        return [or_(*conditions)]
+    def to_filters(self, queues: list[FsrsQueue], now: datetime) -> BinaryExpression:
+        conditions = [self.queue_condition(queue, now) for queue in queues]
+        return or_(*conditions)
 
-    def queue_condition(queue: FsrsQueue):
-        now = datetime.now(timezone.utc)
-
-        base = []
-        if queue.is_pending:
-            base.append(FsrsModel.is_pending.is_(True))
-        else:
-            base.append(FsrsModel.is_pending.is_(False))
+    def queue_condition(self, queue: FsrsQueue, now: datetime):
+        conditions = []
 
         if queue.type == QueueType.DUE:
-            base.extend([
-                FsrsModel.stability > 3,
-                FsrsModel.next_review_date <= now,
+            conditions.extend([
+                FsrsModel.is_pending.is_(queue.is_pending),
+                FsrsModel.state == State.REVIEW.value,
+                FsrsModel.due <= now,
             ])
 
         elif queue.type == QueueType.LEARNING:
-            base.append(FsrsModel.stability <= 3)
+            conditions.extend([
+                FsrsModel.is_pending.is_(queue.is_pending),
+                FsrsModel.state.in_([State.LEARNING.value, State.RELEARNING.value]),
+                FsrsModel.due <= now,
+            ])
 
         elif queue.type == QueueType.NEW:
-            base.append(FsrsModel.reviews_count == 0)
+            conditions.append(
+                or_(
+                    and_(
+                        FsrsModel.is_pending.is_(True),
+                        FsrsModel.due <= now
+                    ),
+                    FsrsModel.due.is_(None)
+                )
+            )
 
         else:
             raise ValueError(f"Invalid queue type: {queue.type}")
 
-        return and_(*base)
+        return and_(*conditions)
         
-        
-    def get_queue_type(self, fsrs: FsrsParams) -> QueueType:
-        if fsrs.stability is None:
+    def get_queue_type(self, fsrs: FsrsParams|None, new_queue_available: bool) -> QueueType:
+        now = datetime.now(timezone.utc)
+
+        if fsrs is None or (new_queue_available and fsrs.is_pending and fsrs.due <= now):
             return QueueType.NEW
-        elif fsrs.stability > 3 and fsrs.next_review_date <= datetime.now():
+        elif fsrs.state.value == State.REVIEW.value and fsrs.due <= now:
             return QueueType.DUE
-        elif fsrs.stability <= 3:
+        elif fsrs.state.value in [State.LEARNING.value, State.RELEARNING.value]:
             return QueueType.LEARNING
         else:
             return QueueType.NEW

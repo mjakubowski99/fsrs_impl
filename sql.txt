@@ -1,0 +1,4 @@
+SELECT flashcards.id, flashcards.content, flashcards.user_id, fsrs.id AS id_1, fsrs.user_id AS user_id_1, fsrs.flashcard_id, fsrs.is_pending, fsrs.difficulty, fsrs.stability, fsrs.state, fsrs.due, fsrs.reviews_count, fsrs.last_rating 
+FROM flashcards LEFT OUTER JOIN fsrs ON flashcards.id = fsrs.flashcard_id 
+WHERE flashcards.user_id = 'test' AND fsrs.is_pending IS false AND fsrs.state = 2 AND fsrs.due <= '2026-01-04 12:51:56.152556+00:00' ORDER BY CASE WHEN (fsrs.is_pending IS false AND fsrs.state = 2 AND fsrs.due <= '2026-01-04 12:51:56.152556+00:00') THEN 1 END ASC
+ LIMIT 1

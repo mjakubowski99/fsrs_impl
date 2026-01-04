@@ -8,6 +8,7 @@ class FsrsQueue:
     is_pending: bool 
     daily_count: int 
     daily_limit: int
+    transform_to_not_pending: bool = False
 
     def is_available(self) -> bool:
         return self.daily_count < self.daily_limit
