@@ -157,3 +157,29 @@ def test_get_pending_due_card():
     assert card.current_queue.type == QueueType.NEW
     assert card.fsrs.is_pending is True 
     assert card.current_queue.transform_to_not_pending is True
+
+def save_fsrs():
+    session = Session()
+    fsrs_repository = FsrsRepository(FsrsQueueMapper())
+    fsrs = FsrsModel(
+        flashcard_id=1,
+        user_id="test",
+        difficulty=10.0,
+        stability=11.0,
+        state=State.REVIEW.value,
+        due=int(datetime.now(timezone.utc).timestamp()),
+        reviews_count=0,
+        last_rating=None,
+        is_pending=True,
+    )
+    fsrs_repository.save(fsrs)
+    assert fsrs.id is not None
+    assert session.query(FsrsModel).filter(
+        FsrsModel.difficulty == fsrs.difficulty,
+        FsrsModel.stability == fsrs.stability,
+        FsrsModel.state == fsrs.state.value,
+        FsrsModel.due == fsrs.due,
+        FsrsModel.reviews_count == fsrs.reviews_count,
+        FsrsModel.last_rating == fsrs.last_rating,
+        FsrsModel.is_pending == fsrs.is_pending,
+    ).first() is not None
