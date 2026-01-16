@@ -103,6 +103,8 @@ DESIRED_RETAINABILITY = 0.9
 MAXIMUM_INTERVAL = 36500
 
 class FsrsParams:
+    flashcard_id: int
+    user_id: str
     is_pending: bool
     difficulty: float|None 
     stability: float|None 
@@ -114,9 +116,21 @@ class FsrsParams:
     relearning_steps: list
     step: int|None 
     state: State
+    newly_created: bool
+    updated_at: datetime
+
+    @staticmethod
+    def new_fsrs(flashcard_id: int, user_id: str) -> 'FsrsParams':
+        return FsrsParams(
+            flashcard_id=flashcard_id,
+            user_id=user_id,
+            newly_created=True,
+        )
 
     def __init__(
         self,
+        flashcard_id: int,
+        user_id: str,
         state: State = State.LEARNING,
         step: int|None = None,
         stability: float|None = None,
@@ -134,6 +148,9 @@ class FsrsParams:
         ),
         is_pending: bool = False,
         last_rating: Rating|None = None,
+        newly_created: bool = False,
+        freshness_score: float = 0.5,
+        updated_at: datetime = datetime.now(timezone.utc),
     ):
         self.state = state
 
@@ -156,11 +173,51 @@ class FsrsParams:
         self.is_pending = is_pending
         self.reviews_count = reviews_count
         self.last_rating = last_rating
+        self.flashcard_id = flashcard_id
+        self.user_id = user_id
+        self.newly_created = newly_created
+        self.freshness_score = freshness_score
+        self.updated_at = updated_at
 
     def __repr__(self):
         return f"FsrsParams(stability={self.stability}, difficulty={self.difficulty}, due={self.due}, last_review={self.last_review}, reviews_count={self.reviews_count}, last_rating={self.last_rating}, learning_steps={self.learning_steps}, relearning_steps={self.relearning_steps}, step={self.step}, state={self.state}, is_pending={self.is_pending})"
 
-    def review(self, rating: Rating, review_datetime: datetime|None = None):
+    def review_out_of_schedule(self, rating: Rating, review_datetime: datetime|None = None):
+        self.update_freshness_score(rating)
+
+    
+    def update_freshness_score(self, rating: Rating):
+        now = datetime.now(timezone.utc)
+
+        # czas od ostatniego update
+        seconds_since_last_review = (now.replace(tzinfo=None) - self.updated_at.replace(tzinfo=None)).total_seconds() if self.updated_at else 3600
+
+        # time_factor dla EMA: szybkie powtórki = mniejszy wpływ
+        time_factor = 1 - math.exp(-seconds_since_last_review / 600)  # half-life = 10 min
+
+        # normalizacja cech
+        rating_norm = float(rating.value) / 4
+        difficulty_norm = (self.difficulty - MIN_DIFFICULTY) / (MAX_DIFFICULTY - MIN_DIFFICULTY)
+        stability_norm = 1 - min(1.0, self.stability / 30)
+
+        instant_score = 0.5 * rating_norm + 0.2 * difficulty_norm + 0.3 * stability_norm
+
+        # EMA
+        base_adaptation = 0.25
+        adaptation_factor = base_adaptation * time_factor
+        prev_score = self.freshness_score if self.freshness_score is not None else 0.5
+        self.freshness_score = prev_score * (1 - adaptation_factor) + instant_score * adaptation_factor
+
+        # penalty za samo pokazanie karty
+        REVIEW_PENALTY = 0.15  # umiarkowana kara
+        self.freshness_score *= (1 - REVIEW_PENALTY * rating_norm)  # rating_norm w [0,1]
+
+        # clamp i round
+        self.freshness_score = max(0.0, min(1.0, round(self.freshness_score, 6)))
+
+        self.updated_at = now
+
+    def review(self, rating: Rating, review_datetime: datetime|None = None, enable_fuzzing = False):
         if review_datetime is None:
             review_datetime = datetime.now(timezone.utc)
 
@@ -178,9 +235,14 @@ class FsrsParams:
         else:
             raise ValueError(f"Invalid state: {self.state}")
 
+        if enable_fuzzing and self.state == State.REVIEW:
+            next_interval = _get_fuzzed_interval(interval=next_interval)
+
         self.due = review_datetime + next_interval
         self.last_review = review_datetime
         self.reviews_count += 1
+        self.last_rating = rating
+        self.update_freshness_score(rating)
 
     def _handle_learning(self, rating: Rating, review_datetime: datetime, days_since_last_review: int|None, time_since_last_review: timedelta|None):
         assert self.step is not None
@@ -358,71 +420,73 @@ class FsrsParams:
         next_i = get_next_interval(stability=stability, parameters=self.parameters)
         return timedelta(days=next_i)
 
-    def activate_from_pending(self, current_datetime: datetime|None = None) -> None:
+    def activate_from_pending(self, current_datetime: datetime | None = None) -> None:
         """
-        Convert a pending card back to normal schedule.
-        
-        Adjusts stability and difficulty based on how long the card was pending.
-        Cards that were pending for a long time have lower actual retrievability,
-        so we adjust parameters to reflect this reality without breaking the schedule.
-        
-        Args:
-            current_datetime: Current datetime (defaults to now if None)
+        Convert a pending card back to normal FSRS schedule.
+
+        Pending cards simulate delayed reviews. We adjust stability/difficulty
+        based on actual retrievability without breaking FSRS semantics.
         """
+
         if not self.is_pending:
             return
-        
+
         if current_datetime is None:
             current_datetime = datetime.now(timezone.utc)
-        
+
+        # If card has no meaningful FSRS state, just activate it
         if self.last_review is None or self.stability is None or self.difficulty is None:
             self.is_pending = False
+            self.due = current_datetime
             return
 
         elapsed_time = current_datetime - self.last_review
-        elapsed_days = max(0, elapsed_time.days)
-        
-        if elapsed_days == 0:
+        elapsed_days = max(0.0, elapsed_time.total_seconds() / 86400)
+
+        # Very short pending → no correction
+        if elapsed_days < 0.25:  # ~6 hours
             self.is_pending = False
+            self.due = current_datetime
             return
-        
-        actual_retrievability = get_card_retrievability(
+
+        actual_ret = get_card_retrievability(
             stability=self.stability,
             last_review_datetime=self.last_review,
             current_datetime=current_datetime,
-            parameters=self.parameters
+            parameters=self.parameters,
         )
-        
-        # If retrievability is very low (card was effectively forgotten),
-        if actual_retrievability < 0.3:
-            # Card was effectively forgotten, use forget stability adjustment
+
+        desired_ret = DESIRED_RETAINABILITY
+        forgotten_threshold = desired_ret * 0.6
+
+        if actual_ret < forgotten_threshold:
             self.stability = next_forget_stability(
                 difficulty=self.difficulty,
                 stability=self.stability,
-                retrievability=actual_retrievability,
-                parameters=self.parameters
+                retrievability=actual_ret,
+                parameters=self.parameters,
             )
-            # Slightly increase difficulty (forgotten cards are harder)
-            difficulty_increase = min(0.5, elapsed_days * 0.01)  # Max 0.5 increase
+
+            difficulty_increase = min(0.6, 0.02 * elapsed_days)
             self.difficulty = clamp_difficulty(self.difficulty + difficulty_increase)
-            
+
             if self.state == State.REVIEW and self.stability <= 3.0:
-                if len(self.relearning_steps) > 0:
+                if self.relearning_steps:
                     self.state = State.RELEARNING
                     self.step = 0
+
         else:
-            # Card still has some retrievability, adjust stability more conservatively
-            # Use a weighted adjustment: reduce stability proportionally to how much
-            desired_retention = DESIRED_RETAINABILITY
-            retention_loss = desired_retention - actual_retrievability
-            
-            if retention_loss > 0:
-                stability_reduction_factor = 1.0 - (retention_loss * 0.3)  # Max 30% reduction
-                self.stability = clamp_stability(self.stability * stability_reduction_factor)
-                # Slightly increase difficulty (cards that weren't reviewed on time are harder)
-                difficulty_increase = min(0.2, retention_loss * 0.5)
+            retention_gap = max(0.0, desired_ret - actual_ret)
+
+            if retention_gap > 0:
+                # Stability reduction capped and time-aware
+                reduction = min(0.35, retention_gap * 0.4)
+                self.stability = clamp_stability(self.stability * (1.0 - reduction))
+
+                difficulty_increase = min(0.25, retention_gap * 0.5)
                 self.difficulty = clamp_difficulty(self.difficulty + difficulty_increase)
-        
+
+        # Activate card immediately
         self.due = current_datetime
         self.is_pending = False
 
@@ -587,3 +651,39 @@ def get_card_retrievability(
     elapsed_days = max(0, (current_datetime - last_review_datetime).days)
 
     return (1 + factor * elapsed_days / stability) ** decay
+
+def _get_fuzzed_interval(self, *, interval: timedelta) -> timedelta:
+    from random import random
+
+    interval_days = interval.days
+
+    if interval_days < 2.5:
+        return interval
+
+    def _get_fuzz_range(*, interval_days: int) -> tuple[int, int]:
+        delta = 1.0
+        for fuzz_range in FUZZ_RANGES:
+            delta += fuzz_range["factor"] * max(
+                min(interval_days, fuzz_range["end"]) - fuzz_range["start"], 0.0
+            )
+
+        min_ivl = int(round(interval_days - delta))
+        max_ivl = int(round(interval_days + delta))
+
+        min_ivl = max(2, min_ivl)
+        max_ivl = min(max_ivl, self.maximum_interval)
+        min_ivl = min(min_ivl, max_ivl)
+
+        return min_ivl, max_ivl
+
+    min_ivl, max_ivl = _get_fuzz_range(interval_days=interval_days)
+
+    fuzzed_interval_days = (
+        random() * (max_ivl - min_ivl + 1)
+    ) + min_ivl
+
+    fuzzed_interval_days = min(round(fuzzed_interval_days), self.maximum_interval)
+
+    fuzzed_interval = timedelta(days=fuzzed_interval_days)
+
+    return fuzzed_interval

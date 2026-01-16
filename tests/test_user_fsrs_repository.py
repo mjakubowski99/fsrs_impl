@@ -23,6 +23,12 @@ def test_get_user_fsrs():
                     'is_pending': False,
                     'daily_count': 0,
                     'daily_limit': 10,
+                },
+                 {
+                    'type': QueueType.LEARNING.value,
+                    'is_pending': False,
+                    'daily_count': 10,
+                    'daily_limit': 10,
                 }
             ]
         },
@@ -34,6 +40,8 @@ def test_get_user_fsrs():
     user_fsrs = user_fsrs_repository.get_by_user_id("test")
 
     assert user_fsrs is not None
+    assert len(list(user_fsrs.get_available_queues())) == 1
+    assert list(user_fsrs.get_available_queues())[0].type == QueueType.NEW
 
 def test_save_user_fsrs():
     user_fsrs_repository = UserFsrsRepository()

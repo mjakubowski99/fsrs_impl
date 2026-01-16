@@ -32,10 +32,27 @@ class FsrsModel(Base):
     state = Column(String(1), nullable=False)
     due = Column(Integer, nullable=True, index=True)
     reviews_count = Column(Integer, nullable=False, default=0)
+    step = Column(SmallInteger, nullable=True)
     last_rating = Column(SmallInteger, nullable=True)
+    last_review = Column(Integer, nullable=True)
+    blocked_until = Column(Integer, nullable=True)
+    freshness_score = Column(Integer)
+    updated_at = Column(DateTime, nullable=False)
 
     def __repr__(self):
-        return f"<FsrsModel(id={self.id}, flashcard_id={self.flashcard_id}, difficulty={self.difficulty}, stability={self.stability}, state={self.state}, due={self.due}, reviews_count={self.reviews_count}, last_rating={self.last_rating})>"
+        return f"""<FsrsModel(
+            id={self.id}, 
+            flashcard_id={self.flashcard_id}, 
+            difficulty={self.difficulty}, 
+            stability={self.stability}, 
+            state={self.state}, 
+            due={self.due}, 
+            reviews_count={self.reviews_count},
+            last_rating={self.last_rating},
+            freshness_score={self.freshness_score})>
+        )
+        """
+    
 
 class UserFsrsModel(Base):
     __tablename__ = 'user_fsrs'

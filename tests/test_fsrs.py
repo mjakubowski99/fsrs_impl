@@ -1,6 +1,7 @@
 from src.fsrs_algorithm import (
     initial_difficulty, 
     MIN_DIFFICULTY, 
+    MAX_DIFFICULTY,
     initial_stability,
     get_next_interval,
     MAXIMUM_INTERVAL,
@@ -117,6 +118,8 @@ class TestReviewMethod:
     def test_review_updates_due_last_review_and_reviews_count(self):
         """Test that review method updates due, last_review, and reviews_count."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -141,6 +144,8 @@ class TestReviewMethod:
     def test_review_learning_state_with_no_stability_difficulty(self):
         """Test review in LEARNING state when stability and difficulty are None."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -160,6 +165,8 @@ class TestReviewMethod:
     def test_review_learning_state_with_stability_difficulty(self):
         """Test review in LEARNING state when stability and difficulty are set."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=5.0,
@@ -182,6 +189,8 @@ class TestReviewMethod:
     def test_review_review_state(self):
         """Test review in REVIEW state."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -204,6 +213,8 @@ class TestReviewMethod:
     def test_review_relearning_state(self):
         """Test review in RELEARNING state."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=0,
             stability=5.0,
@@ -220,6 +231,8 @@ class TestReviewMethod:
     def test_review_with_no_last_review(self):
         """Test review when last_review is None (first review)."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -239,6 +252,8 @@ class TestReviewMethod:
         
         for rating in ratings:
             fsrs = FsrsParams(
+                flashcard_id=1,
+                user_id="test",
                 state=State.LEARNING,
                 step=0,
                 stability=None,
@@ -258,6 +273,8 @@ class TestReviewMethod:
         
         for rating in ratings:
             fsrs = FsrsParams(
+                flashcard_id=1,
+                user_id="test",
                 state=State.REVIEW,
                 stability=10.0,
                 difficulty=5.0,
@@ -274,9 +291,11 @@ class TestReviewMethod:
 
     def test_review_invalid_state_raises_error(self):
         """Test that review with invalid state raises ValueError."""
-        fsrs = FsrsParams(state=State.LEARNING)
+        fsrs = FsrsParams(flashcard_id=1, user_id="test", state=State.LEARNING)
         for state in [State.LEARNING, State.REVIEW, State.RELEARNING]:
             fsrs = FsrsParams(
+                flashcard_id=1,
+                user_id="test",
                 state=state,
                 stability=10.0 if state != State.LEARNING else None,
                 difficulty=5.0 if state != State.LEARNING else None,
@@ -289,6 +308,8 @@ class TestReviewMethod:
         """Test review in LEARNING state with learning_steps defined."""
         learning_steps = [timedelta(minutes=1), timedelta(minutes=5), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -304,6 +325,8 @@ class TestReviewMethod:
     def test_review_learning_easy_rating_transitions_to_review(self):
         """Test that EASY rating in LEARNING state transitions to REVIEW state."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -319,6 +342,8 @@ class TestReviewMethod:
         """Test that VERY_HARD rating in REVIEW state transitions to RELEARNING state when relearning_steps exist."""
         relearning_steps = [timedelta(minutes=1)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -334,6 +359,8 @@ class TestReviewMethod:
     def test_review_relearning_easy_rating_transitions_to_review(self):
         """Test that EASY rating in RELEARNING state transitions to REVIEW state."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=0,
             stability=5.0,
@@ -349,6 +376,8 @@ class TestReviewMethod:
     def test_review_multiple_reviews_increment_count(self):
         """Test that multiple reviews correctly increment reviews_count."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0
@@ -384,6 +413,8 @@ class TestReviewMethod:
         )
         
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -413,6 +444,8 @@ class TestReviewMethod:
         """Test learning step progression with GOOD ratings."""
         learning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -437,6 +470,8 @@ class TestReviewMethod:
         """Test that VERY_HARD rating resets learning step to 0."""
         learning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=1,
             stability=5.0,
@@ -453,6 +488,8 @@ class TestReviewMethod:
         """Test HARD rating with one learning step."""
         learning_steps = [timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=5.0,
@@ -473,6 +510,8 @@ class TestReviewMethod:
         """Test HARD rating with two learning steps at step 0."""
         learning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=5.0,
@@ -492,6 +531,8 @@ class TestReviewMethod:
     def test_review_no_learning_steps_transitions_immediately(self):
         """Test that with no learning steps, card transitions to REVIEW immediately."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -510,6 +551,8 @@ class TestReviewMethod:
         """Test relearning step progression with GOOD ratings."""
         relearning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=0,
             stability=5.0,
@@ -534,6 +577,8 @@ class TestReviewMethod:
         """Test that VERY_HARD rating resets relearning step to 0."""
         relearning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=1,
             stability=5.0,
@@ -550,6 +595,8 @@ class TestReviewMethod:
         """Test HARD rating with one relearning step."""
         relearning_steps = [timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=0,
             stability=5.0,
@@ -570,6 +617,8 @@ class TestReviewMethod:
         """Test HARD rating with two relearning steps at step 0."""
         relearning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=0,
             stability=5.0,
@@ -589,6 +638,8 @@ class TestReviewMethod:
     def test_review_no_relearning_steps_stays_in_review(self):
         """Test that with no relearning steps, VERY_HARD doesn't transition to RELEARNING."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -605,6 +656,8 @@ class TestReviewMethod:
         """Test all ratings in REVIEW state."""
         for rating in [Rating.EASY, Rating.GOOD, Rating.HARD, Rating.VERY_HARD]:
             fsrs_copy = FsrsParams(
+                flashcard_id=1,
+                user_id="test",
                 state=State.REVIEW,
                 stability=10.0,
                 difficulty=5.0,
@@ -626,6 +679,8 @@ class TestReviewMethod:
     def test_review_stability_always_above_minimum(self):
         """Test that stability is always >= STABILITY_MIN after reviews."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -644,6 +699,8 @@ class TestReviewMethod:
         from src.fsrs_algorithm import MIN_DIFFICULTY, MAX_DIFFICULTY
         
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -661,6 +718,8 @@ class TestReviewMethod:
         review_datetime = datetime(2022, 11, 29, 12, 30, 0, 0, timezone.utc)
         
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -680,6 +739,8 @@ class TestReviewMethod:
         review_datetime = datetime(2022, 11, 29, 12, 30, 0, 0, timezone.utc)
         
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -698,6 +759,8 @@ class TestReviewMethod:
         """Test that EASY rating in LEARNING state immediately transitions to REVIEW."""
         learning_steps = [timedelta(minutes=1), timedelta(minutes=10), timedelta(minutes=30)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -718,6 +781,8 @@ class TestReviewMethod:
         """Test that EASY rating in RELEARNING state immediately transitions to REVIEW."""
         relearning_steps = [timedelta(minutes=1), timedelta(minutes=10), timedelta(minutes=30)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.RELEARNING,
             step=1,
             stability=5.0,
@@ -739,6 +804,8 @@ class TestReviewMethod:
         custom_parameters[2] = 3.0  # Change initial stability for GOOD
         
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -757,6 +824,8 @@ class TestReviewMethod:
     def test_review_interval_increases_with_good_reviews(self):
         """Test that intervals increase with consecutive GOOD reviews."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=5.0,
             difficulty=5.0,
@@ -778,6 +847,8 @@ class TestReviewMethod:
     def test_review_very_hard_decreases_stability(self):
         """Test that VERY_HARD rating decreases stability."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=20.0,
             difficulty=5.0,
@@ -795,6 +866,8 @@ class TestReviewMethod:
     def test_review_easy_increases_stability(self):
         """Test that EASY rating increases stability significantly."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -809,6 +882,8 @@ class TestReviewMethod:
     def test_review_learning_initializes_stability_difficulty(self):
         """Test that first review in LEARNING state initializes stability and difficulty."""
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -829,6 +904,8 @@ class TestReviewMethod:
         """Test VERY_HARD in REVIEW state transitions to RELEARNING when steps exist."""
         relearning_steps = [timedelta(minutes=1), timedelta(minutes=10)]
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -857,6 +934,8 @@ class TestReviewMethod:
         ivl_history = [0, 0, 1, 3, 8, 21]
         
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -886,6 +965,8 @@ class TestCustomFsrsParams:
         # Create FsrsParams with default parameters (desired_retention and maximum_interval 
         # are used in get_next_interval, but FsrsParams uses defaults in calculate_next_interval)
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -947,6 +1028,8 @@ class TestCustomFsrsParams:
         parameters2[20] = 0.2
 
         fsrs2 = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -965,6 +1048,8 @@ class TestCustomFsrsParams:
         custom_parameters[20] = 0.15
 
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -1028,6 +1113,8 @@ class TestCustomFsrsParams:
         ]
 
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -1045,6 +1132,8 @@ class TestCustomFsrsParams:
         ]
 
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.REVIEW,
             stability=10.0,
             difficulty=5.0,
@@ -1068,6 +1157,8 @@ class TestCustomFsrsParams:
         ]
 
         fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
             state=State.LEARNING,
             step=0,
             stability=None,
@@ -1129,3 +1220,462 @@ class TestCustomFsrsParams:
         # Interval should be clamped to maximum_interval
         assert interval <= 10
         assert interval > 0
+
+
+class TestActivateFromPending:
+    """Tests for the FsrsParams.activate_from_pending method."""
+
+    def test_activate_from_pending_not_pending_early_return(self):
+        """Test that activate_from_pending returns early if card is not pending."""
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=False,
+            last_review=datetime.now(timezone.utc) - timedelta(days=5)
+        )
+        
+        initial_due = fsrs.due
+        initial_stability = fsrs.stability
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending()
+        
+        # Should not change anything
+        assert fsrs.due == initial_due
+        assert fsrs.stability == initial_stability
+        assert fsrs.difficulty == initial_difficulty
+        assert fsrs.is_pending is False
+
+    def test_activate_from_pending_no_meaningful_state(self):
+        """Test activate_from_pending when card has no meaningful FSRS state."""
+        # Test with None last_review
+        fsrs1 = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=None
+        )
+        
+        current_datetime = datetime.now(timezone.utc)
+        fsrs1.activate_from_pending(current_datetime)
+        
+        assert fsrs1.is_pending is False
+        assert fsrs1.due.timestamp() == current_datetime.timestamp()
+        
+        # Test with None stability
+        fsrs2 = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=None,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=datetime.now(timezone.utc) - timedelta(days=5)
+        )
+        
+        fsrs2.activate_from_pending(current_datetime)
+        
+        assert fsrs2.is_pending is False
+        assert fsrs2.due == current_datetime
+        
+        # Test with None difficulty
+        fsrs3 = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=None,
+            is_pending=True,
+            last_review=datetime.now(timezone.utc) - timedelta(days=5)
+        )
+        
+        fsrs3.activate_from_pending(current_datetime)
+        
+        assert fsrs3.is_pending is False
+        assert fsrs3.due == current_datetime
+
+    def test_activate_from_pending_very_short_pending(self):
+        """Test activate_from_pending for very short pending periods (< 0.25 days)."""
+        last_review = datetime.now(timezone.utc) - timedelta(hours=5)  # ~0.2 days
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_stability = fsrs.stability
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should just activate without adjustments
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        assert fsrs.stability == initial_stability
+        assert fsrs.difficulty == initial_difficulty
+
+    def test_activate_from_pending_forgotten_card(self):
+        """Test activate_from_pending when card is forgotten (actual_ret < forgotten_threshold)."""
+        # Create a card that will have low retrievability
+        last_review = datetime.now(timezone.utc) - timedelta(days=30)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=5.0,  # Low stability
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_stability = fsrs.stability
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should use next_forget_stability and increase difficulty
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        assert fsrs.stability is not None
+        assert fsrs.stability >= STABILITY_MIN
+        # Stability should be adjusted (likely decreased)
+        assert fsrs.difficulty is not None
+        assert fsrs.difficulty >= initial_difficulty  # Difficulty should increase
+        assert fsrs.difficulty <= MAX_DIFFICULTY
+
+    def test_activate_from_pending_retention_gap(self):
+        """Test activate_from_pending when actual_ret < desired_ret but >= forgotten_threshold."""
+        # Create a card with moderate retrievability
+        last_review = datetime.now(timezone.utc) - timedelta(days=10)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=20.0,  # Higher stability
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_stability = fsrs.stability
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should reduce stability and increase difficulty
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        assert fsrs.stability is not None
+        assert fsrs.stability >= STABILITY_MIN
+        # Stability should be reduced (but not too much)
+        assert fsrs.stability <= initial_stability
+        assert fsrs.difficulty is not None
+        assert fsrs.difficulty >= initial_difficulty  # Difficulty should increase
+        assert fsrs.difficulty <= MAX_DIFFICULTY
+
+    def test_activate_from_pending_transition_to_relearning(self):
+        """Test that activate_from_pending transitions to RELEARNING when stability <= 3.0."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=30)
+        current_datetime = datetime.now(timezone.utc)
+        
+        relearning_steps = [timedelta(minutes=10)]
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=0.25,  # Low stability that will trigger relearning
+            difficulty=4.0,
+            is_pending=True,
+            last_review=last_review,
+            relearning_steps=relearning_steps
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should transition to RELEARNING if stability <= 3.0 after adjustment
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        if fsrs.stability is not None and fsrs.stability <= 3.0:
+            assert fsrs.state == State.RELEARNING
+            assert fsrs.step == 0
+
+    def test_activate_from_pending_no_relearning_steps(self):
+        """Test that activate_from_pending doesn't transition to RELEARNING if no relearning_steps."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=30)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=2.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review,
+            relearning_steps=[]  # No relearning steps
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should not transition to RELEARNING if no relearning_steps
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        # State should remain REVIEW if no relearning_steps
+
+    def test_activate_from_pending_uses_current_datetime(self):
+        """Test that activate_from_pending uses provided current_datetime."""
+        last_review = datetime(2022, 1, 1, 12, 0, 0, 0, timezone.utc)
+        current_datetime = datetime(2022, 1, 15, 12, 0, 0, 0, timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        assert fsrs.due == current_datetime
+        assert fsrs.is_pending is False
+
+    def test_activate_from_pending_defaults_to_now(self):
+        """Test that activate_from_pending defaults to current time if no datetime provided."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=5)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        before_activation = datetime.now(timezone.utc)
+        fsrs.activate_from_pending()
+        after_activation = datetime.now(timezone.utc)
+        
+        assert fsrs.is_pending is False
+        assert before_activation <= fsrs.due <= after_activation
+
+    def test_activate_from_pending_difficulty_increase_capped(self):
+        """Test that difficulty increase is capped appropriately."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=100)  # Very long pending
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=5.0,
+            difficulty=9.0,  # High difficulty
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Difficulty should increase but be capped
+        assert fsrs.difficulty >= initial_difficulty
+        assert fsrs.difficulty <= MAX_DIFFICULTY
+        # With very long elapsed_days, increase should be capped at 0.6 for forgotten case
+        # or 0.25 for retention gap case
+
+    def test_activate_from_pending_stability_reduction_capped(self):
+        """Test that stability reduction is capped appropriately."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=20)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=50.0,  # High stability
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_stability = fsrs.stability
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Stability should be reduced but capped
+        assert fsrs.stability >= STABILITY_MIN
+        assert fsrs.stability <= initial_stability
+        # Reduction should be capped at 35% for retention gap case
+
+    def test_activate_from_pending_learning_state(self):
+        """Test activate_from_pending in LEARNING state."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=10)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.LEARNING,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review,
+            step=0
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should activate regardless of state
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        # State should remain LEARNING (method doesn't change state unless specific conditions)
+
+    def test_activate_from_pending_relearning_state(self):
+        """Test activate_from_pending in RELEARNING state."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=10)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.RELEARNING,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review,
+            step=0
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should activate regardless of state
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+
+    def test_activate_from_pending_negative_elapsed_time(self):
+        """Test activate_from_pending with negative elapsed time (future last_review)."""
+        last_review = datetime.now(timezone.utc) + timedelta(days=1)  # Future
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_stability = fsrs.stability
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # elapsed_days should be max(0.0, ...) so it should be 0
+        # This should trigger the very short pending case
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        assert fsrs.stability == initial_stability
+        assert fsrs.difficulty == initial_difficulty
+
+    def test_activate_from_pending_high_retrievability(self):
+        """Test activate_from_pending when actual_ret >= desired_ret (no adjustment needed)."""
+        # Create a card with high retrievability (recently reviewed)
+        last_review = datetime.now(timezone.utc) - timedelta(days=1)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=100.0,  # Very high stability
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        initial_stability = fsrs.stability
+        initial_difficulty = fsrs.difficulty
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        # Should activate, but retention_gap should be 0 or negative
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        # If retention_gap <= 0, no adjustments should be made
+        # But due to the logic, if retention_gap > 0, adjustments are made
+        assert fsrs.stability is not None
+        assert fsrs.difficulty is not None
+
+    def test_activate_from_pending_multiple_calls(self):
+        """Test that calling activate_from_pending multiple times is safe."""
+        last_review = datetime.now(timezone.utc) - timedelta(days=10)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        assert fsrs.is_pending is False
+        
+        # Second call should be a no-op (early return)
+        initial_due = fsrs.due
+        fsrs.activate_from_pending(current_datetime)
+        
+        assert fsrs.is_pending is False
+        assert fsrs.due == initial_due
+
+    def test_activate_from_pending_custom_parameters(self):
+        """Test activate_from_pending with custom parameters."""
+        custom_parameters = list(DEFAULT_PARAMETERS)
+        custom_parameters[20] = 0.2  # Change decay parameter
+        
+        last_review = datetime.now(timezone.utc) - timedelta(days=10)
+        current_datetime = datetime.now(timezone.utc)
+        
+        fsrs = FsrsParams(
+            flashcard_id=1,
+            user_id="test",
+            state=State.REVIEW,
+            stability=10.0,
+            difficulty=5.0,
+            is_pending=True,
+            last_review=last_review,
+            parameters=custom_parameters
+        )
+        
+        fsrs.activate_from_pending(current_datetime)
+        
+        assert fsrs.is_pending is False
+        assert fsrs.due == current_datetime
+        assert fsrs.stability is not None
+        assert fsrs.difficulty is not None

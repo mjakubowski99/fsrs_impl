@@ -4,7 +4,7 @@ from datetime import datetime
 
 from src.fsrs_queue import FsrsQueue
 from src.queue_type import QueueType
-
+from datetime import timezone
 
 @dataclass
 class UserFsrs:
@@ -16,14 +16,17 @@ class UserFsrs:
     @staticmethod 
     def new_fsrs(user_id: str) -> 'UserFsrs':
         return UserFsrs(
-            user_id, [
-                FsrsQueue(QueueType.NEW, False, 0, 10),
-                FsrsQueue(QueueType.LEARNING, False, 0, 10),
+            id=None,
+            user_id=user_id, 
+            queues=[
                 FsrsQueue(QueueType.DUE, False, 0, 10),
-                FsrsQueue(QueueType.NEW, True, 0, 10),
-                FsrsQueue(QueueType.LEARNING, True, 0, 10),
+                FsrsQueue(QueueType.LEARNING, False, 0, 10),
+                FsrsQueue(QueueType.NEW, False, 0, 10),
                 FsrsQueue(QueueType.DUE, True, 0, 10),
+                FsrsQueue(QueueType.LEARNING, True, 0, 10),
+                FsrsQueue(QueueType.NEW, True, 0, 10),
             ],
+            updated_at=datetime.now(timezone.utc),
         )
     
     def get_available_queues(self) -> list[FsrsQueue]:
@@ -33,7 +36,7 @@ class UserFsrs:
 
     def update_queue(self, queue: FsrsQueue):
         for i in range(len(self.queues)):
-            if self.queues[i].type == queue.type:
+            if self.queues[i].type == queue.type and self.queues[i].is_pending == queue.is_pending:
                 self.queues[i] = queue
                 return 
                 

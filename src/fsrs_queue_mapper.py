@@ -35,39 +35,45 @@ class FsrsQueueMapper:
         conditions = []
 
         if queue.type == QueueType.DUE:
-            conditions.extend([
+            conditions.extend(and_(*[
                 FsrsModel.is_pending.is_(queue.is_pending),
                 FsrsModel.state == State.REVIEW.value,
-                FsrsModel.due <= now,
-            ])
+                FsrsModel.due <= now.timestamp(),
+            ]))
 
         elif queue.type == QueueType.LEARNING:
-            conditions.extend([
+            conditions.extend(and_(*[
                 FsrsModel.is_pending.is_(queue.is_pending),
                 FsrsModel.state.in_([State.LEARNING.value, State.RELEARNING.value]),
-                FsrsModel.due <= now,
-            ])
+                FsrsModel.due <= now.timestamp(),
+            ]))
 
         elif queue.type == QueueType.NEW:
-            conditions.append(
-                or_(
-                    and_(
-                        FsrsModel.is_pending.is_(True),
-                        FsrsModel.due <= now
-                    ),
-                    FsrsModel.due.is_(None)
+
+            if not queue.is_pending:
+                conditions.append(
+                    or_(
+                        and_(
+                            FsrsModel.is_pending.is_(True),
+                            FsrsModel.due <= now.timestamp(),
+                        ),
+                        FsrsModel.due.is_(None),
+                    )
                 )
-            )
+            else:
+                conditions.append(
+                    FsrsModel.due.is_(None),
+                )
 
         else:
             raise ValueError(f"Invalid queue type: {queue.type}")
 
         return and_(*conditions)
         
-    def get_queue_type(self, fsrs: FsrsParams|None, new_queue_available: bool) -> QueueType:
+    def get_queue_type(self, fsrs: FsrsParams, new_queue_available: bool) -> QueueType:
         now = datetime.now(timezone.utc)
 
-        if fsrs is None or (new_queue_available and fsrs.is_pending and fsrs.due <= now):
+        if fsrs.newly_created or (new_queue_available and fsrs.is_pending and fsrs.due <= now):
             return QueueType.NEW
         elif fsrs.state.value == State.REVIEW.value and fsrs.due <= now:
             return QueueType.DUE
