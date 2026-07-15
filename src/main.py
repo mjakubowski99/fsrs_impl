@@ -47,28 +47,3 @@ while True:
     cards[0] = updated_card
 
     print(f"New due: {updated_card.due}")
-
-# fsrs = FsrsParams()
-
-# while (True):
-#     rating = input('Rating: ')
-#     if rating == 'exit':
-#         break
-#     fsrs.review(Rating(int(rating)))
-#     card, review_log = scheduler.review_card(card, FsrsRating(int(rating)))
-
-#     print(f"Stability: {fsrs.stability}, {card.stability}")
-#     assert fsrs.stability == card.stability
-#     print(f"Difficulty: {fsrs.difficulty}, {card.difficulty}")
-#     assert fsrs.difficulty == card.difficulty
-#     print(f"Due: {fsrs.due}, {card.due}")
-#     diff = abs((fsrs.due - card.due).total_seconds())
-#     if diff > 1.5:  # Accept up to 1.5 seconds difference
-#         raise AssertionError(f"Due datetime differs too much: {fsrs.due} vs {card.due} (difference {diff} seconds)")
-#     print(f"Last Review: {fsrs.last_review}, {card.last_review}")
-#     diff = abs((fsrs.last_review - card.last_review).total_seconds())
-#     if diff > 1.5:  # Accept up to 1.5 seconds difference
-#         raise AssertionError(f"Last review datetime differs too much: {fsrs.last_review} vs {card.last_review} (difference {diff} seconds)")
-#     print(f"Step: {fsrs.step}, {card.step}")
-#     assert fsrs.step == card.step
-#     print('Ok')
