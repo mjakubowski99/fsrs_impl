@@ -10,3 +10,8 @@ The application uses a local **SQLite database** to store flashcards, user data,
 * SQLite
 * Custom FSRS implementation
 * Console / CLI
+
+To run it you just need to run main file:
+```
+python3 src/main.py
+```
